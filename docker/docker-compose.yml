@@ -1,0 +1,9 @@
+version: "3"
+
+services:
+  adder:
+    image: srinskit/calc
+    command: -m adder-service -p 10.0.0.0-5:5701 -i 10.0.0.2
+  api-server:
+    image: srinskit/calc
+    command: -m api-server -p 10.0.0.0-5:5701 -i 10.0.0.3
