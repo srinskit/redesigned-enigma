@@ -3,10 +3,10 @@ package io.srinskit.deployers;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
+import io.vertx.core.json.JsonObject;
 import io.vertx.core.eventbus.EventBusOptions;
 import io.vertx.core.spi.cluster.ClusterManager;
-import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
-import com.hazelcast.config.Config;
+import io.vertx.spi.cluster.zookeeper.ZookeeperClusterManager;
 import io.srinskit.adder.AdderServiceVerticle;
 import io.srinskit.apiserver.APIServerVerticle;
 import io.vertx.core.cli.CLI;
@@ -45,19 +45,14 @@ public class CLIDeployer {
 		});
 	}
 
-	public static void deploy(List<String> modules, List<String> hazelCastMembers, String host) {
-		Config config = new Config();
+	public static void deploy(List<String> modules, List<String> zookeepers, String host) {
+		JsonObject zkConfig = new JsonObject();
+		zkConfig.put("zookeeperHosts", String.join(",", zookeepers));
+		zkConfig.put("rootPath", "io.vertx");
+		zkConfig.put("retry", new JsonObject().put("initialSleepTime", 3000).put("maxTimes", 3));
 
-		config.setInstanceName("HazelcastService");
-		config.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(false);
-		config.getNetworkConfig().getJoin().getAwsConfig().setEnabled(false);
-		config.getNetworkConfig().getJoin().getTcpIpConfig().setEnabled(true);
+		ClusterManager mgr = new ZookeeperClusterManager(zkConfig);
 
-		for (String ip : hazelCastMembers) {
-			config.getNetworkConfig().getJoin().getTcpIpConfig().addMember(ip);
-		}
-
-		ClusterManager mgr = new HazelcastClusterManager(config);
 		EventBusOptions ebOptions = new EventBusOptions().setClustered(true).setHost(host);
 		VertxOptions options = new VertxOptions().setClusterManager(mgr).setEventBusOptions(ebOptions);
 
@@ -77,8 +72,8 @@ public class CLIDeployer {
 						new Option().setLongName("help").setShortName("h").setFlag(true).setDescription("display help"))
 				.addOption(new Option().setLongName("modules").setShortName("m").setMultiValued(true).setRequired(true)
 						.setDescription("modules to launch").addChoice("adder-service").addChoice("api-server"))
-				.addOption(new Option().setLongName("peers").setShortName("p").setMultiValued(true).setRequired(true)
-						.setDescription("hazelcast peers"))
+				.addOption(new Option().setLongName("zookeepers").setShortName("z").setMultiValued(true).setRequired(true)
+						.setDescription("zookeeper hosts"))
 				.addOption(new Option().setLongName("host").setShortName("i").setRequired(true)
 						.setDescription("public host"));
 
@@ -87,9 +82,9 @@ public class CLIDeployer {
 		CommandLine commandLine = cli.parse(Arrays.asList(args), false);
 		if (commandLine.isValid() && !commandLine.isFlagEnabled("help")) {
 			List<String> modules = new ArrayList<String>(commandLine.getOptionValues("modules"));
-			List<String> members = new ArrayList<String>(commandLine.getOptionValues("peers"));
+			List<String> zookeepers = new ArrayList<String>(commandLine.getOptionValues("zookeepers"));
 			String host = commandLine.getOptionValue("host");
-			deploy(modules, members, host);
+			deploy(modules, zookeepers, host);
 		} else {
 			System.out.println(usageString);
 		}
