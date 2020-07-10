@@ -7,7 +7,7 @@ import io.vertx.core.http.HttpServerResponse;
 import java.io.*;
 
 public class APIServerVerticle extends AbstractVerticle {
-	static String historyFileName = "/data/api-server-history.txt";
+	static String historyFileName = "data/api-server-history.txt";
 
 	@Override
 	public void start() {

@@ -49,10 +49,9 @@ public class CLIDeployer {
 		JsonObject zkConfig = new JsonObject();
 		zkConfig.put("zookeeperHosts", String.join(",", zookeepers));
 		zkConfig.put("rootPath", "io.vertx");
-		zkConfig.put("retry", new JsonObject().put("initialSleepTime", 3000).put("maxTimes", 3));
+		// zkConfig.put("retry", new JsonObject().put("initialSleepTime", 3000).put("maxTimes", 3));
 
 		ClusterManager mgr = new ZookeeperClusterManager(zkConfig);
-
 		EventBusOptions ebOptions = new EventBusOptions().setClustered(true).setHost(host);
 		VertxOptions options = new VertxOptions().setClusterManager(mgr).setEventBusOptions(ebOptions);
 
@@ -64,6 +63,7 @@ public class CLIDeployer {
 				System.out.println("Could not join cluster");
 			}
 		});
+		
 	}
 
 	public static void main(String[] args) {

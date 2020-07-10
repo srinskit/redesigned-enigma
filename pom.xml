@@ -7,7 +7,7 @@
   <version>0.0.1-SNAPSHOT</version>
 
   <properties>
-    <vertx.version>3.9.0</vertx.version>
+    <vertx.version>3.9.1</vertx.version>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -40,11 +40,6 @@
       <groupId>io.vertx</groupId>
       <artifactId>vertx-service-proxy</artifactId>
       <version>${vertx.version}</version>
-    </dependency>
-    <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
-      <version>25.1-jre</version>
     </dependency>
     <dependency>
       <groupId>io.vertx</groupId>
