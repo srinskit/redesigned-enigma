@@ -45,13 +45,15 @@ public class CLIDeployer {
 		});
 	}
 
-	public static void deploy(List<String> modules, List<String> zookeepers, String host) {
+	public static ClusterManager getClusterManager(List<String> zookeepers) {
 		JsonObject zkConfig = new JsonObject();
 		zkConfig.put("zookeeperHosts", String.join(",", zookeepers));
-		zkConfig.put("rootPath", "io.vertx");
-		// zkConfig.put("retry", new JsonObject().put("initialSleepTime", 3000).put("maxTimes", 3));
+		
+		return new ZookeeperClusterManager(zkConfig);
+	}
 
-		ClusterManager mgr = new ZookeeperClusterManager(zkConfig);
+	public static void deploy(List<String> modules, List<String> zookeepers, String host) {
+		ClusterManager mgr = getClusterManager(zookeepers);
 		EventBusOptions ebOptions = new EventBusOptions().setClustered(true).setHost(host);
 		VertxOptions options = new VertxOptions().setClusterManager(mgr).setEventBusOptions(ebOptions);
 
@@ -63,7 +65,7 @@ public class CLIDeployer {
 				System.out.println("Could not join cluster");
 			}
 		});
-		
+
 	}
 
 	public static void main(String[] args) {
@@ -72,8 +74,8 @@ public class CLIDeployer {
 						new Option().setLongName("help").setShortName("h").setFlag(true).setDescription("display help"))
 				.addOption(new Option().setLongName("modules").setShortName("m").setMultiValued(true).setRequired(true)
 						.setDescription("modules to launch").addChoice("adder-service").addChoice("api-server"))
-				.addOption(new Option().setLongName("zookeepers").setShortName("z").setMultiValued(true).setRequired(true)
-						.setDescription("zookeeper hosts"))
+				.addOption(new Option().setLongName("zookeepers").setShortName("z").setMultiValued(true)
+						.setRequired(true).setDescription("zookeeper hosts"))
 				.addOption(new Option().setLongName("host").setShortName("i").setRequired(true)
 						.setDescription("public host"));
 
