@@ -8,6 +8,8 @@
 
   <properties>
     <vertx.version>3.9.0</vertx.version>
+    <hazelcast.version>3.6.3</hazelcast.version>
+    <curator.version>4.0.1</curator.version>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -42,14 +44,19 @@
       <version>${vertx.version}</version>
     </dependency>
     <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
-      <version>25.1-jre</version>
+      <groupId>org.apache.curator</groupId>
+      <artifactId>curator-x-discovery</artifactId>
+      <version>${curator.version}</version>
     </dependency>
     <dependency>
       <groupId>io.vertx</groupId>
-      <artifactId>vertx-zookeeper</artifactId>
+      <artifactId>vertx-hazelcast</artifactId>
       <version>${vertx.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>com.hazelcast</groupId>
+      <artifactId>hazelcast-zookeeper</artifactId>
+      <version>${hazelcast.version}</version>
     </dependency>
   </dependencies>
 

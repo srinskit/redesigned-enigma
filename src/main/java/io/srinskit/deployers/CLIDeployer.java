@@ -3,10 +3,13 @@ package io.srinskit.deployers;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
-import io.vertx.core.json.JsonObject;
 import io.vertx.core.eventbus.EventBusOptions;
 import io.vertx.core.spi.cluster.ClusterManager;
-import io.vertx.spi.cluster.zookeeper.ZookeeperClusterManager;
+import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
+import com.hazelcast.config.Config;
+import com.hazelcast.config.DiscoveryStrategyConfig;
+import com.hazelcast.zookeeper.*;
+
 import io.srinskit.adder.AdderServiceVerticle;
 import io.srinskit.apiserver.APIServerVerticle;
 import io.vertx.core.cli.CLI;
@@ -45,14 +48,22 @@ public class CLIDeployer {
 		});
 	}
 
+	public static ClusterManager getClusterManager(List<String> zookeepers) {
+		Config config = new Config();
+		config.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(false);
+		config.setProperty("hazelcast.discovery.enabled", "true");
+
+		DiscoveryStrategyConfig discoveryStrategyConfig = new DiscoveryStrategyConfig(
+				new ZookeeperDiscoveryStrategyFactory());
+		discoveryStrategyConfig.addProperty(ZookeeperDiscoveryProperties.ZOOKEEPER_URL.key(),
+				String.join(",", zookeepers));
+		config.getNetworkConfig().getJoin().getDiscoveryConfig().addDiscoveryStrategyConfig(discoveryStrategyConfig);
+
+		return new HazelcastClusterManager(config);
+	}
+
 	public static void deploy(List<String> modules, List<String> zookeepers, String host) {
-		JsonObject zkConfig = new JsonObject();
-		zkConfig.put("zookeeperHosts", String.join(",", zookeepers));
-		zkConfig.put("rootPath", "io.vertx");
-		zkConfig.put("retry", new JsonObject().put("initialSleepTime", 3000).put("maxTimes", 3));
-
-		ClusterManager mgr = new ZookeeperClusterManager(zkConfig);
-
+		ClusterManager mgr = getClusterManager(zookeepers);
 		EventBusOptions ebOptions = new EventBusOptions().setClustered(true).setHost(host);
 		VertxOptions options = new VertxOptions().setClusterManager(mgr).setEventBusOptions(ebOptions);
 
@@ -72,8 +83,8 @@ public class CLIDeployer {
 						new Option().setLongName("help").setShortName("h").setFlag(true).setDescription("display help"))
 				.addOption(new Option().setLongName("modules").setShortName("m").setMultiValued(true).setRequired(true)
 						.setDescription("modules to launch").addChoice("adder-service").addChoice("api-server"))
-				.addOption(new Option().setLongName("zookeepers").setShortName("z").setMultiValued(true).setRequired(true)
-						.setDescription("zookeeper hosts"))
+				.addOption(new Option().setLongName("zookeepers").setShortName("z").setMultiValued(true)
+						.setRequired(true).setDescription("zookeeper hosts"))
 				.addOption(new Option().setLongName("host").setShortName("i").setRequired(true)
 						.setDescription("public host"));
 
