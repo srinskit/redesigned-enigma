@@ -3,10 +3,13 @@ package io.srinskit.deployers;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
-import io.vertx.core.json.JsonObject;
 import io.vertx.core.eventbus.EventBusOptions;
 import io.vertx.core.spi.cluster.ClusterManager;
-import io.vertx.spi.cluster.zookeeper.ZookeeperClusterManager;
+import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
+import com.hazelcast.config.Config;
+import com.hazelcast.config.DiscoveryStrategyConfig;
+import com.hazelcast.zookeeper.*;
+
 import io.srinskit.adder.AdderServiceVerticle;
 import io.srinskit.apiserver.APIServerVerticle;
 import io.vertx.core.cli.CLI;
@@ -46,10 +49,17 @@ public class CLIDeployer {
 	}
 
 	public static ClusterManager getClusterManager(List<String> zookeepers) {
-		JsonObject zkConfig = new JsonObject();
-		zkConfig.put("zookeeperHosts", String.join(",", zookeepers));
-		
-		return new ZookeeperClusterManager(zkConfig);
+		Config config = new Config();
+		config.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(false);
+		config.setProperty("hazelcast.discovery.enabled", "true");
+
+		DiscoveryStrategyConfig discoveryStrategyConfig = new DiscoveryStrategyConfig(
+				new ZookeeperDiscoveryStrategyFactory());
+		discoveryStrategyConfig.addProperty(ZookeeperDiscoveryProperties.ZOOKEEPER_URL.key(),
+				String.join(",", zookeepers));
+		config.getNetworkConfig().getJoin().getDiscoveryConfig().addDiscoveryStrategyConfig(discoveryStrategyConfig);
+
+		return new HazelcastClusterManager(config);
 	}
 
 	public static void deploy(List<String> modules, List<String> zookeepers, String host) {
