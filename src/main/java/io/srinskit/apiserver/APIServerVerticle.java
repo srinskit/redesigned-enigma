@@ -7,7 +7,10 @@ import io.vertx.core.http.HttpServerResponse;
 import java.io.*;
 import io.vertx.micrometer.*;
 import io.micrometer.core.instrument.*;
+import io.micrometer.core.instrument.config.MeterFilter;
 import io.vertx.micrometer.backends.BackendRegistries;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class APIServerVerticle extends AbstractVerticle {
 	static String historyFileName = "data/api-server-history.txt";
@@ -17,12 +20,21 @@ public class APIServerVerticle extends AbstractVerticle {
 		System.out.println("Starting an API server");
 		Router router = Router.router(vertx);
 		MeterRegistry registry = BackendRegistries.getDefaultNow();
-		Counter counter=registry.counter("api_server_http_requests_count",  "api", "/add/");
-		Timer timer=registry.timer("api_server_http_server_responseTime","api", "/add/");
+		// Counter counter=registry.counter("api_server_http_requests_count",  "api", "/add/");
+		// Timer timer=registry.timer("api_server_http_responseTime","api", "/add/");
 		
+		Pattern pattern = Pattern.compile("/add/.*/.*");
+		registry.config().meterFilter(
+  		MeterFilter.replaceTagValues(Label.HTTP_PATH.toString(), actualPath -> {
+    	Matcher m = pattern.matcher(actualPath);
+   		if (m.matches()) {
+      		return "/add/:x/:y";
+    	}
+    		return actualPath;
+  		}, ""));
 		router.route("/add/:x/:y/").handler(routingContext -> {
-			counter.increment(1);
-			timer.record( () ->{
+			// counter.increment(1);
+			// timer.record( () ->{
 			HttpServerResponse response = routingContext.response();
 			AdderService adderService = AdderService.createProxy(vertx, "adder-service-address");
 			Integer x = new Integer(routingContext.request().getParam("x"));
@@ -45,7 +57,7 @@ public class APIServerVerticle extends AbstractVerticle {
 				response.end(reply);
 			});
 			
-		});
+		// });
 	});
 		router.route("/metrics").handler(PrometheusScrapingHandler.create());
 		router.route("/history").handler(routingContext -> {
