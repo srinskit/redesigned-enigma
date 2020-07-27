@@ -28,7 +28,7 @@ public class APIServerVerticle extends AbstractVerticle {
   		MeterFilter.replaceTagValues(Label.HTTP_PATH.toString(), actualPath -> {
     	Matcher m = pattern.matcher(actualPath);
    		if (m.matches()) {
-      		return "/add/:x/:y";
+      		return "/add/:x/:y/";
     	}
     		return actualPath;
   		}, ""));
