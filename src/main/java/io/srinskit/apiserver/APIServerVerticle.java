@@ -5,6 +5,9 @@ import io.vertx.core.AbstractVerticle;
 import io.vertx.ext.web.Router;
 import io.vertx.core.http.HttpServerResponse;
 import java.io.*;
+import io.vertx.micrometer.*;
+import io.micrometer.core.instrument.*;
+import io.vertx.micrometer.backends.BackendRegistries;
 
 public class APIServerVerticle extends AbstractVerticle {
 	static String historyFileName = "data/api-server-history.txt";
@@ -13,8 +16,13 @@ public class APIServerVerticle extends AbstractVerticle {
 	public void start() {
 		System.out.println("Starting an API server");
 		Router router = Router.router(vertx);
-
+		MeterRegistry registry = BackendRegistries.getDefaultNow();
+		Counter counter=registry.counter("api_server_http_requests_count",  "api", "/add/");
+		Timer timer=registry.timer("api_server_http_server_responseTime","api", "/add/");
+		
 		router.route("/add/:x/:y/").handler(routingContext -> {
+			counter.increment(1);
+			timer.record( () ->{
 			HttpServerResponse response = routingContext.response();
 			AdderService adderService = AdderService.createProxy(vertx, "adder-service-address");
 			Integer x = new Integer(routingContext.request().getParam("x"));
@@ -36,8 +44,10 @@ public class APIServerVerticle extends AbstractVerticle {
 				}
 				response.end(reply);
 			});
+			
 		});
-
+	});
+		router.route("/metrics").handler(PrometheusScrapingHandler.create());
 		router.route("/history").handler(routingContext -> {
 			HttpServerResponse response = routingContext.response();
 			response.sendFile(historyFileName);

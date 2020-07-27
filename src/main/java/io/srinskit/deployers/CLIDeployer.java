@@ -20,6 +20,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import io.vertx.micrometer.*;
+import io.micrometer.prometheus.PrometheusConfig;
+import io.micrometer.prometheus.PrometheusMeterRegistry;
+
+
 public class CLIDeployer {
 	private static AbstractVerticle getVerticle(String name) {
 		switch (name) {
@@ -65,7 +70,10 @@ public class CLIDeployer {
 	public static void deploy(List<String> modules, List<String> zookeepers, String host) {
 		ClusterManager mgr = getClusterManager(zookeepers);
 		EventBusOptions ebOptions = new EventBusOptions().setClustered(true).setHost(host);
-		VertxOptions options = new VertxOptions().setClusterManager(mgr).setEventBusOptions(ebOptions);
+		VertxOptions options = new VertxOptions().setClusterManager(mgr).setEventBusOptions(ebOptions).setMetricsOptions(
+		 new MicrometerMetricsOptions()
+	  	.setPrometheusOptions(new VertxPrometheusOptions().setEnabled(true))
+	  	.setEnabled(true));
 
 		Vertx.clusteredVertx(options, res -> {
 			if (res.succeeded()) {
