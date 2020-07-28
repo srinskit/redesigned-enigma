@@ -59,7 +59,6 @@ public class APIServerVerticle extends AbstractVerticle {
 			
 		// });
 	});
-		router.route("/metrics").handler(PrometheusScrapingHandler.create());
 		router.route("/history").handler(routingContext -> {
 			HttpServerResponse response = routingContext.response();
 			response.sendFile(historyFileName);

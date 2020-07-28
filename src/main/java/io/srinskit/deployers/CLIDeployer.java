@@ -78,17 +78,14 @@ public class CLIDeployer {
 	public static MetricsOptions getMetricsOptions() {
 		return new MicrometerMetricsOptions().setPrometheusOptions(new VertxPrometheusOptions().setEnabled(true)
 				.setStartEmbeddedServer(true).setEmbeddedServerOptions(new HttpServerOptions().setPort(9000)))
+				.setLabels(EnumSet.of(Label.HTTP_CODE, Label.HTTP_METHOD, Label.HTTP_PATH))
 				.setEnabled(true);
 	}
 
 	public static void deploy(List<String> modules, List<String> zookeepers, String host) {
 		ClusterManager mgr = getClusterManager(zookeepers);
 		EventBusOptions ebOptions = new EventBusOptions().setClustered(true).setHost(host);
-		VertxOptions options = new VertxOptions().setClusterManager(mgr).setEventBusOptions(ebOptions).setMetricsOptions(
-		 new MicrometerMetricsOptions()
-		  .setPrometheusOptions(new VertxPrometheusOptions().setEnabled(true))
-		  .setLabels(EnumSet.of(Label.HTTP_CODE, Label.HTTP_METHOD, Label.HTTP_PATH))
-	  	.setEnabled(true));
+		VertxOptions options = new VertxOptions().setClusterManager(mgr).setEventBusOptions(ebOptions).setMetricsOptions(getMetricsOptions());
 
 		Vertx.clusteredVertx(options, res -> {
 			if (res.succeeded()) {
