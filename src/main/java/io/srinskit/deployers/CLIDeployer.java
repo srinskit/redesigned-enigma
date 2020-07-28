@@ -6,17 +6,22 @@ import io.vertx.core.VertxOptions;
 import java.util.EnumSet;
 
 import io.vertx.core.eventbus.EventBusOptions;
+import io.vertx.core.metrics.MetricsOptions;
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 import com.hazelcast.config.Config;
 import com.hazelcast.config.DiscoveryStrategyConfig;
 import com.hazelcast.zookeeper.*;
 
-import io.srinskit.adder.AdderServiceVerticle;
-import io.srinskit.apiserver.APIServerVerticle;
+import io.vertx.micrometer.*;
+import io.vertx.core.http.HttpServerOptions;
+
 import io.vertx.core.cli.CLI;
 import io.vertx.core.cli.Option;
 import io.vertx.core.cli.CommandLine;
+
+import io.srinskit.adder.AdderServiceVerticle;
+import io.srinskit.apiserver.APIServerVerticle;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -70,14 +75,17 @@ public class CLIDeployer {
 		return new HazelcastClusterManager(config);
 	}
 
+	public static MetricsOptions getMetricsOptions() {
+		return new MicrometerMetricsOptions().setPrometheusOptions(new VertxPrometheusOptions().setEnabled(true)
+				.setStartEmbeddedServer(true).setEmbeddedServerOptions(new HttpServerOptions().setPort(9000)))
+				.setLabels(EnumSet.of(Label.HTTP_CODE, Label.HTTP_METHOD, Label.HTTP_PATH))
+				.setEnabled(true);
+	}
+
 	public static void deploy(List<String> modules, List<String> zookeepers, String host) {
 		ClusterManager mgr = getClusterManager(zookeepers);
 		EventBusOptions ebOptions = new EventBusOptions().setClustered(true).setHost(host);
-		VertxOptions options = new VertxOptions().setClusterManager(mgr).setEventBusOptions(ebOptions).setMetricsOptions(
-		 new MicrometerMetricsOptions()
-		  .setPrometheusOptions(new VertxPrometheusOptions().setEnabled(true))
-		  .setLabels(EnumSet.of(Label.HTTP_CODE, Label.HTTP_METHOD, Label.HTTP_PATH))
-	  	.setEnabled(true));
+		VertxOptions options = new VertxOptions().setClusterManager(mgr).setEventBusOptions(ebOptions).setMetricsOptions(getMetricsOptions());
 
 		Vertx.clusteredVertx(options, res -> {
 			if (res.succeeded()) {
