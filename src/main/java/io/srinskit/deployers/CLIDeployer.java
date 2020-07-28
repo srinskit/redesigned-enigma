@@ -3,6 +3,8 @@ package io.srinskit.deployers;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
+import java.util.EnumSet;
+
 import io.vertx.core.eventbus.EventBusOptions;
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
@@ -19,6 +21,12 @@ import io.vertx.core.cli.CommandLine;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import io.vertx.micrometer.*;
+import io.micrometer.prometheus.PrometheusConfig;
+import io.micrometer.prometheus.PrometheusMeterRegistry;
+import io.micrometer.core.instrument.*;
+import java.util.EnumSet;
 
 public class CLIDeployer {
 	private static AbstractVerticle getVerticle(String name) {
@@ -65,7 +73,11 @@ public class CLIDeployer {
 	public static void deploy(List<String> modules, List<String> zookeepers, String host) {
 		ClusterManager mgr = getClusterManager(zookeepers);
 		EventBusOptions ebOptions = new EventBusOptions().setClustered(true).setHost(host);
-		VertxOptions options = new VertxOptions().setClusterManager(mgr).setEventBusOptions(ebOptions);
+		VertxOptions options = new VertxOptions().setClusterManager(mgr).setEventBusOptions(ebOptions).setMetricsOptions(
+		 new MicrometerMetricsOptions()
+		  .setPrometheusOptions(new VertxPrometheusOptions().setEnabled(true))
+		  .setLabels(EnumSet.of(Label.HTTP_CODE, Label.HTTP_METHOD, Label.HTTP_PATH))
+	  	.setEnabled(true));
 
 		Vertx.clusteredVertx(options, res -> {
 			if (res.succeeded()) {
@@ -101,4 +113,5 @@ public class CLIDeployer {
 			System.out.println(usageString);
 		}
 	}
+	
 }
