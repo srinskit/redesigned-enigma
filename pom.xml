@@ -9,6 +9,7 @@
   <properties>
     <vertx.version>3.9.0</vertx.version>
     <hazelcast.version>3.6.3</hazelcast.version>
+    <micrometer.version>1.1.0</micrometer.version>
     <curator.version>4.0.1</curator.version>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
@@ -57,6 +58,16 @@
       <groupId>com.hazelcast</groupId>
       <artifactId>hazelcast-zookeeper</artifactId>
       <version>${hazelcast.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.vertx</groupId>
+      <artifactId>vertx-micrometer-metrics</artifactId>
+      <version>${vertx.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.micrometer</groupId>
+      <artifactId>micrometer-registry-prometheus</artifactId>
+      <version>${micrometer.version}</version>
     </dependency>
   </dependencies>
 
