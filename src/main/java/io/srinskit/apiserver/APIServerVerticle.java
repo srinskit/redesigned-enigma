@@ -20,9 +20,6 @@ public class APIServerVerticle extends AbstractVerticle {
 		System.out.println("Starting an API server");
 		Router router = Router.router(vertx);
 		MeterRegistry registry = BackendRegistries.getDefaultNow();
-		// Counter counter=registry.counter("api_server_http_requests_count",  "api", "/add/");
-		// Timer timer=registry.timer("api_server_http_responseTime","api", "/add/");
-		
 		Pattern pattern = Pattern.compile("/add/.*/.*");
 		registry.config().meterFilter(
   		MeterFilter.replaceTagValues(Label.HTTP_PATH.toString(), actualPath -> {
@@ -33,18 +30,21 @@ public class APIServerVerticle extends AbstractVerticle {
     		return actualPath;
   		}, ""));
 		router.route("/add/:x/:y/").handler(routingContext -> {
-			// counter.increment(1);
-			// timer.record( () ->{
+			
 			HttpServerResponse response = routingContext.response();
 			AdderService adderService = AdderService.createProxy(vertx, "adder-service-address");
 			Integer x = new Integer(routingContext.request().getParam("x"));
 			Integer y = new Integer(routingContext.request().getParam("y"));
+
 			adderService.operate(x, y, res -> {
 				String reply = "";
 				if (res.succeeded()) {
-					reply = String.format("%d + %d = %d\n", x, y, res.result());
+					reply = String.format("%d+ %d = %d\n", x, y, res.result());
+			
 				} else {
 					reply = String.format("%d + %d = %s\n", x, y, "ERROR, " + res.cause());
+			
+
 				}
 				try {
 					FileWriter fileWriter = new FileWriter(historyFileName, true);
@@ -53,11 +53,13 @@ public class APIServerVerticle extends AbstractVerticle {
 				} catch (IOException ex) {
 					System.out.println("Error writing to history file");
 					reply = "ERROR: " + ex.getMessage();
+					
 				}
+				
 				response.end(reply);
 			});
 			
-		// });
+		
 	});
 		router.route("/history").handler(routingContext -> {
 			HttpServerResponse response = routingContext.response();
