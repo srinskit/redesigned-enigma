@@ -12,6 +12,11 @@ import io.vertx.micrometer.backends.BackendRegistries;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import io.micrometer.core.instrument.binder.jvm.ClassLoaderMetrics;
+import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics;
+import io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics;
+import io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics;
+import io.micrometer.core.instrument.binder.system.ProcessorMetrics;
 public class APIServerVerticle extends AbstractVerticle {
 	static String historyFileName = "data/api-server-history.txt";
 
@@ -20,6 +25,13 @@ public class APIServerVerticle extends AbstractVerticle {
 		System.out.println("Starting an API server");
 		Router router = Router.router(vertx);
 		MeterRegistry registry = BackendRegistries.getDefaultNow();
+		// Counter counter=registry.counter("api_server_http_requests_count",  "api", "/add/");
+		new JvmMemoryMetrics().bindTo(registry);
+		// new JvmGcMetrics().bindTo(registry); 
+		new ProcessorMetrics().bindTo(registry); 
+		new JvmThreadMetrics().bindTo(registry); 
+		
+		
 		Pattern pattern = Pattern.compile("/add/.*/.*");
 		registry.config().meterFilter(
   		MeterFilter.replaceTagValues(Label.HTTP_PATH.toString(), actualPath -> {
@@ -30,21 +42,23 @@ public class APIServerVerticle extends AbstractVerticle {
     		return actualPath;
   		}, ""));
 		router.route("/add/:x/:y/").handler(routingContext -> {
+			// counter.increment(1);
+			// Timer timer=registry.timer("Service_responseTime","service", "adder");
 			
 			HttpServerResponse response = routingContext.response();
 			AdderService adderService = AdderService.createProxy(vertx, "adder-service-address");
 			Integer x = new Integer(routingContext.request().getParam("x"));
 			Integer y = new Integer(routingContext.request().getParam("y"));
-			
-			
+			// timer.record( () ->{
+			Timer.Sample adder_service =Timer.start(registry); 
 			adderService.operate(x, y, res -> {
 				String reply = "";
 				if (res.succeeded()) {
 					reply = String.format("%d+ %d = %d\n", x, y, res.result());
-			
+					adder_service.stop(registry.timer("Service_responseTime", "service", "adder", "status", "success"));
 				} else {
 					reply = String.format("%d + %d = %s\n", x, y, "ERROR, " + res.cause());
-			
+					adder_service.stop(registry.timer("Service_responseTime", "service", "adder", "status", "error"));
 
 				}
 				try {
@@ -60,7 +74,7 @@ public class APIServerVerticle extends AbstractVerticle {
 				response.end(reply);
 			});
 			
-		
+		// });
 	});
 		router.route("/history").handler(routingContext -> {
 			HttpServerResponse response = routingContext.response();
