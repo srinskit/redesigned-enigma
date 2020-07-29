@@ -32,6 +32,11 @@ import io.micrometer.prometheus.PrometheusConfig;
 import io.micrometer.prometheus.PrometheusMeterRegistry;
 import io.micrometer.core.instrument.*;
 import java.util.EnumSet;
+import io.micrometer.core.instrument.binder.jvm.ClassLoaderMetrics;
+import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics;
+import io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics;
+import io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics;
+import io.micrometer.core.instrument.binder.system.ProcessorMetrics;
 
 public class CLIDeployer {
 	private static AbstractVerticle getVerticle(String name) {
@@ -82,6 +87,14 @@ public class CLIDeployer {
 				.setEnabled(true);
 	}
 
+	public static void setJVMMetrics{
+		MeterRegistry registry = BackendRegistries.getDefaultNow();
+		new JvmMemoryMetrics().bindTo(registry);
+		new JvmGcMetrics().bindTo(registry); 
+		new ProcessorMetrics().bindTo(registry); 
+		new JvmThreadMetrics().bindTo(registry); 
+		
+	}
 	public static void deploy(List<String> modules, List<String> zookeepers, String host) {
 		ClusterManager mgr = getClusterManager(zookeepers);
 		EventBusOptions ebOptions = new EventBusOptions().setClustered(true).setHost(host);
@@ -90,6 +103,7 @@ public class CLIDeployer {
 		Vertx.clusteredVertx(options, res -> {
 			if (res.succeeded()) {
 				Vertx vertx = res.result();
+				setJVMMetrics();
 				recursiveDeploy(vertx, modules, 0);
 			} else {
 				System.out.println("Could not join cluster");
