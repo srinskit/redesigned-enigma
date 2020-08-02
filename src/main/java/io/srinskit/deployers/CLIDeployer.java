@@ -84,8 +84,9 @@ public class CLIDeployer {
 
 	public static MetricsOptions getMetricsOptions() {
 		return new MicrometerMetricsOptions().setPrometheusOptions(new VertxPrometheusOptions().setEnabled(true)
-				.setStartEmbeddedServer(true).setEmbeddedServerOptions(new HttpServerOptions().setPort(9000)))
-				.setLabels(EnumSet.of(Label.HTTP_CODE, Label.HTTP_METHOD, Label.HTTP_PATH))
+				.setStartEmbeddedServer(true).setEmbeddedServerOptions(new HttpServerOptions().setPort(9000))
+				.setPublishQuantiles(true))
+				.setLabels(EnumSet.of(Label.EB_ADDRESS, Label.EB_FAILURE, Label.HTTP_CODE, Label.HTTP_METHOD, Label.HTTP_PATH))
 				.setEnabled(true);
 	}
 
