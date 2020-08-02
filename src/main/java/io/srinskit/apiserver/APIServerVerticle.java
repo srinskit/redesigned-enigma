@@ -1,6 +1,7 @@
 package io.srinskit.apiserver;
 
 import io.srinskit.adder.AdderService;
+import io.srinskit.divide.DivideService;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.ext.web.Router;
 import io.vertx.core.http.HttpServerResponse;
@@ -61,6 +62,38 @@ public class APIServerVerticle extends AbstractVerticle {
 			
 		
 	});
+	router.route("/divide/:x/:y/").handler(routingContext -> {
+			
+		HttpServerResponse response = routingContext.response();
+		DivideService divideService = DivideService.createProxy(vertx, "divide-service-address");
+		Integer x = new Integer(routingContext.request().getParam("x"));
+		Integer y = new Integer(routingContext.request().getParam("y"));
+
+		divideService.operate(x, y, res_div -> {
+			String reply = "";
+			if (res_div.succeeded()) {
+				reply = String.format("%d / %d = %f\n", x, y, res_div.result());
+		
+			} else {
+				reply = String.format("%d / %d = %s\n", x, y, "ERROR, " + res_div.cause());
+		
+
+			}
+			try {
+				FileWriter fileWriter = new FileWriter(historyFileName, true);
+				fileWriter.write(reply);
+				fileWriter.close();
+			} catch (IOException ex) {
+				System.out.println("Error writing to history file");
+				reply = "ERROR: " + ex.getMessage();
+				
+			}
+			
+			response.end(reply);
+		});
+		
+	
+});
 		router.route("/history").handler(routingContext -> {
 			HttpServerResponse response = routingContext.response();
 			response.sendFile(historyFileName);

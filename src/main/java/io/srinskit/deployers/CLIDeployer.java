@@ -21,6 +21,7 @@ import io.vertx.core.cli.Option;
 import io.vertx.core.cli.CommandLine;
 
 import io.srinskit.adder.AdderServiceVerticle;
+import io.srinskit.divide.DivideServiceVerticle;
 import io.srinskit.apiserver.APIServerVerticle;
 
 import java.util.ArrayList;
@@ -47,6 +48,8 @@ public class CLIDeployer {
 				return new APIServerVerticle();
 			case "adder-service":
 				return new AdderServiceVerticle();
+			case "divide-service":
+				return new DivideServiceVerticle();
 		}
 		return null;
 	}
@@ -121,7 +124,7 @@ public class CLIDeployer {
 				.addOption(
 						new Option().setLongName("help").setShortName("h").setFlag(true).setDescription("display help"))
 				.addOption(new Option().setLongName("modules").setShortName("m").setMultiValued(true).setRequired(true)
-						.setDescription("modules to launch").addChoice("adder-service").addChoice("api-server"))
+						.setDescription("modules to launch").addChoice("adder-service").addChoice("divide-service").addChoice("api-server"))
 				.addOption(new Option().setLongName("zookeepers").setShortName("z").setMultiValued(true)
 						.setRequired(true).setDescription("zookeeper hosts"))
 				.addOption(new Option().setLongName("host").setShortName("i").setRequired(true)
