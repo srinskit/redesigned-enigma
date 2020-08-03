@@ -21,15 +21,23 @@ public class APIServerVerticle extends AbstractVerticle {
 		System.out.println("Starting an API server");
 		Router router = Router.router(vertx);
 		MeterRegistry registry = BackendRegistries.getDefaultNow();
-		Pattern pattern = Pattern.compile("/add/.*/.*");
+		Pattern addpattern = Pattern.compile("/add/.*/.*");
+		Pattern divpattern = Pattern.compile("/divide/.*/.*");
 		registry.config().meterFilter(
   		MeterFilter.replaceTagValues(Label.HTTP_PATH.toString(), actualPath -> {
-    	Matcher m = pattern.matcher(actualPath);
+    	Matcher m = addpattern.matcher(actualPath);
    		if (m.matches()) {
       		return "/add/:x/:y/";
     	}
     		return actualPath;
-  		}, ""));
+  		}, "")).meterFilter(MeterFilter.replaceTagValues(Label.HTTP_PATH.toString(), actualPath -> {
+			Matcher m = divpattern.matcher(actualPath);
+			   if (m.matches()) {
+				  return "/divide/:x/:y/";
+			}
+				return actualPath;
+			  }, ""));
+		
 		router.route("/add/:x/:y/").handler(routingContext -> {
 			
 			HttpServerResponse response = routingContext.response();
@@ -61,39 +69,41 @@ public class APIServerVerticle extends AbstractVerticle {
 			});
 			
 		
-	});
-	router.route("/divide/:x/:y/").handler(routingContext -> {
+		});
+
+		router.route("/divide/:x/:y/").handler(routingContext -> {
 			
-		HttpServerResponse response = routingContext.response();
-		DivideService divideService = DivideService.createProxy(vertx, "divide-service-address");
-		Integer x = new Integer(routingContext.request().getParam("x"));
-		Integer y = new Integer(routingContext.request().getParam("y"));
+			HttpServerResponse response = routingContext.response();
+			DivideService divideService = DivideService.createProxy(vertx, "divide-service-address");
+			Integer x = new Integer(routingContext.request().getParam("x"));
+			Integer y = new Integer(routingContext.request().getParam("y"));
 
-		divideService.operate(x, y, res_div -> {
-			String reply = "";
-			if (res_div.succeeded()) {
-				reply = String.format("%d / %d = %f\n", x, y, res_div.result());
-		
-			} else {
-				reply = String.format("%d / %d = %s\n", x, y, "ERROR, " + res_div.cause());
-		
+			divideService.operate(x, y, res_div -> {
+				String reply = "";
+				if (res_div.succeeded()) {
+					reply = String.format("%d / %d = %f\n", x, y, res_div.result());
+			
+				} else {
+					reply = String.format("%d / %d = %s\n", x, y, "ERROR, " + res_div.cause());
+			
 
-			}
-			try {
-				FileWriter fileWriter = new FileWriter(historyFileName, true);
-				fileWriter.write(reply);
-				fileWriter.close();
-			} catch (IOException ex) {
-				System.out.println("Error writing to history file");
-				reply = "ERROR: " + ex.getMessage();
+				}
+				try {
+					FileWriter fileWriter = new FileWriter(historyFileName, true);
+					fileWriter.write(reply);
+					fileWriter.close();
+				} catch (IOException ex) {
+					System.out.println("Error writing to history file");
+					reply = "ERROR: " + ex.getMessage();
+					
+				}
 				
-			}
+				response.end(reply);
+			});
 			
-			response.end(reply);
+		
 		});
 		
-	
-});
 		router.route("/history").handler(routingContext -> {
 			HttpServerResponse response = routingContext.response();
 			response.sendFile(historyFileName);
