@@ -71,9 +71,10 @@ public class CLIDeployer {
 		});
 	}
 
-	public static ClusterManager getClusterManager(List<String> zookeepers, String clusterID) {
+	public static ClusterManager getClusterManager(String host, List<String> zookeepers, String clusterID) {
 		Config config = new Config();
 		config.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(false);
+		config.getNetworkConfig().setPublicAddress(host);
 		config.setProperty("hazelcast.discovery.enabled", "true");
 
 		DiscoveryStrategyConfig discoveryStrategyConfig = new DiscoveryStrategyConfig(
@@ -103,7 +104,7 @@ public class CLIDeployer {
 		
 	}
 	public static void deploy(List<String> modules, List<String> zookeepers, String host) {
-		ClusterManager mgr = getClusterManager(zookeepers, "srinskit-calc");
+		ClusterManager mgr = getClusterManager(host, zookeepers, "srinskit-calc");
 		EventBusOptions ebOptions = new EventBusOptions().setClustered(true).setHost(host);
 		VertxOptions options = new VertxOptions().setClusterManager(mgr).setEventBusOptions(ebOptions).setMetricsOptions(getMetricsOptions());
 
