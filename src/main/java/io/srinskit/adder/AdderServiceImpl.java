@@ -5,7 +5,6 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 
-import io.vertx.micrometer.*;
 import io.micrometer.core.instrument.*;
 import io.vertx.micrometer.backends.BackendRegistries;
 

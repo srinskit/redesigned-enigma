@@ -1,7 +1,7 @@
 package io.srinskit.apiserver;
 
 import io.srinskit.adder.AdderService;
-import io.srinskit.divide.DivideService;
+import io.srinskit.divider.DividerService;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.ext.web.Router;
 import io.vertx.core.http.HttpServerResponse;
@@ -14,7 +14,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class APIServerVerticle extends AbstractVerticle {
-	static String historyFileName = "data/api-server-history.txt";
+	static String historyFileName = "/data/api-server-history.txt";
 
 	@Override
 	public void start() {
@@ -74,11 +74,11 @@ public class APIServerVerticle extends AbstractVerticle {
 		router.route("/divide/:x/:y/").handler(routingContext -> {
 			
 			HttpServerResponse response = routingContext.response();
-			DivideService divideService = DivideService.createProxy(vertx, "divide-service-address");
+			DividerService dividerService = DividerService.createProxy(vertx, "divider-service-address");
 			Integer x = new Integer(routingContext.request().getParam("x"));
 			Integer y = new Integer(routingContext.request().getParam("y"));
 
-			divideService.operate(x, y, res_div -> {
+			dividerService.operate(x, y, res_div -> {
 				String reply = "";
 				if (res_div.succeeded()) {
 					reply = String.format("%d / %d = %f\n", x, y, res_div.result());

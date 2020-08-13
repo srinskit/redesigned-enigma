@@ -1,21 +1,21 @@
 
-package io.srinskit.divide;
+package io.srinskit.divider;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.serviceproxy.ServiceBinder;
 import io.vertx.core.eventbus.MessageConsumer;
 import io.vertx.core.json.JsonObject;
 
-public class DivideServiceVerticle extends AbstractVerticle {
+public class DividerServiceVerticle extends AbstractVerticle {
 	ServiceBinder binder;
-	DivideServiceImpl service;
+	DividerServiceImpl service;
 	MessageConsumer<JsonObject> consumer;
 
 	@Override
 	public void start() {
 		binder = new ServiceBinder(vertx);
-		service = new DivideServiceImpl(vertx);
-		consumer = new ServiceBinder(vertx).setAddress("divide-service-address").register(DivideService.class, service);
+		service = new DividerServiceImpl(vertx);
+		consumer = new ServiceBinder(vertx).setAddress("divider-service-address").register(DividerService.class, service);
 	}
 
 	@Override
