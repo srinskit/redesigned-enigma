@@ -6,20 +6,16 @@ import io.vertx.core.VertxOptions;
 import java.util.EnumSet;
 
 import io.vertx.core.eventbus.EventBusOptions;
-import io.vertx.core.metrics.MetricsOptions;
 import io.vertx.core.spi.cluster.ClusterManager;
 import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 import com.hazelcast.config.Config;
 import com.hazelcast.config.DiscoveryStrategyConfig;
 import com.hazelcast.zookeeper.*;
 
-import io.vertx.micrometer.*;
 import io.vertx.core.http.HttpServerOptions;
-
 import io.vertx.core.cli.CLI;
 import io.vertx.core.cli.Option;
 import io.vertx.core.cli.CommandLine;
-
 import io.srinskit.adder.AdderServiceVerticle;
 import io.srinskit.divider.DividerServiceVerticle;
 import io.srinskit.apiserver.APIServerVerticle;
@@ -27,13 +23,19 @@ import io.srinskit.apiserver.APIServerVerticle;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import io.micrometer.core.instrument.*;
 
+import io.vertx.core.metrics.MetricsOptions;
+import io.vertx.micrometer.VertxPrometheusOptions;
+import io.vertx.micrometer.MicrometerMetricsOptions;
+import io.vertx.micrometer.Label;
+import io.micrometer.core.instrument.MeterRegistry;
+import io.vertx.micrometer.backends.BackendRegistries;
+// JVM metrics imports
 import io.micrometer.core.instrument.binder.jvm.JvmGcMetrics;
 import io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics;
 import io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics;
 import io.micrometer.core.instrument.binder.system.ProcessorMetrics;
-import io.vertx.micrometer.backends.BackendRegistries;
+
 
 
 import org.apache.logging.log4j.LogManager;
@@ -89,8 +91,8 @@ public class CLIDeployer {
 
 	public static MetricsOptions getMetricsOptions() {
 		return new MicrometerMetricsOptions().setPrometheusOptions(new VertxPrometheusOptions().setEnabled(true)
-				.setStartEmbeddedServer(true).setEmbeddedServerOptions(new HttpServerOptions().setPort(9000))
-				.setPublishQuantiles(true))
+				.setStartEmbeddedServer(true).setEmbeddedServerOptions(new HttpServerOptions().setPort(9000)))
+				// .setPublishQuantiles(true))
 				.setLabels(EnumSet.of(Label.EB_ADDRESS, Label.EB_FAILURE, Label.HTTP_CODE, Label.HTTP_METHOD, Label.HTTP_PATH))
 				.setEnabled(true);
 	}

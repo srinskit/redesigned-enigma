@@ -6,8 +6,9 @@ import io.vertx.core.AbstractVerticle;
 import io.vertx.ext.web.Router;
 import io.vertx.core.http.HttpServerResponse;
 import java.io.*;
-import io.vertx.micrometer.*;
-import io.micrometer.core.instrument.*;
+
+import io.vertx.micrometer.Label;
+import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.config.MeterFilter;
 import io.vertx.micrometer.backends.BackendRegistries;
 import java.util.regex.Matcher;
@@ -21,12 +22,13 @@ import org.apache.logging.log4j.Logger;
 public class APIServerVerticle extends AbstractVerticle {
 	static String historyFileName = "/data/api-server-history.txt";
 	private static final Logger LOGGER = LogManager.getLogger(APIServerVerticle.class);
+	private MeterRegistry registry = BackendRegistries.getDefaultNow();
 	@Override
 	public void start() {
 		// LOGGER.fatal("API server verticle deployed");
 		System.out.println("Starting an API server");
 		Router router = Router.router(vertx);
-		MeterRegistry registry = BackendRegistries.getDefaultNow();
+		
 		Pattern addpattern = Pattern.compile("/add/.*/.*");
 		Pattern divpattern = Pattern.compile("/divide/.*/.*");
 		registry.config().meterFilter(

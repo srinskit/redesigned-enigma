@@ -9,7 +9,7 @@
   <properties>
     <vertx.version>3.9.0</vertx.version>
     <hazelcast.version>3.6.3</hazelcast.version>
-    <micrometer.version>1.1.0</micrometer.version>
+    <micrometer.version>1.5.2</micrometer.version>
     <curator.version>4.0.1</curator.version>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>
@@ -77,17 +77,12 @@
     <dependency>
       <groupId>org.apache.logging.log4j</groupId>
       <artifactId>log4j-core</artifactId>
-      <version>2.8.2</version>
+      <version>2.13.3</version>
     </dependency>
     <dependency>
-      <groupId>io.prometheus</groupId>
-      <artifactId>simpleclient</artifactId>
-      <version>0.9.0</version>
-    </dependency>
-    <dependency>
-      <groupId>io.prometheus</groupId>
-      <artifactId>simpleclient_log4j2</artifactId>
-      <version>0.9.0</version>
+      <groupId>com.lmax</groupId>
+      <artifactId>disruptor</artifactId>
+      <version>3.4.2</version>
     </dependency>
   </dependencies>
 

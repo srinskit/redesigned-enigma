@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<Configuration packages="io.prometheus.client.log4j2">
+<Configuration>
 	<Properties>
 		<Property name="LOG_EXCEPTION_CONVERSION_WORD">%xEx</Property>
 		<Property name="LOG_LEVEL_PATTERN">%p</Property>
@@ -10,7 +10,7 @@
 
 		<Console name="ConsoleAppender" target="SYSTEM_OUT" follow="true">
 			<!-- <PatternLayout pattern="${CONSOLE_LOG_PATTERN}" /> -->
-			<JSONLayout compact="true" eventEol="true" endOfLine="\n" stacktraceAsString="true" />
+			<JSONLayout compact="true" eventEol="true" stacktraceAsString="true" includeTimeMillis="true" />
 
 		</Console>
 		<!-- <RollingFile name="RollingFile" ignoreExceptions="false">
@@ -26,13 +26,13 @@
 		</RollingFile> -->
 	</Appenders>
 	<Loggers>
-		<logger name="io.srinskit" level="ALL">
-
+		<logger name="io.srinskit" level="ALL" additivity="false">
+			>
 			<appender-ref ref="ConsoleAppender" />
 			<!-- <appender-ref ref="RollingFile" /> -->
 		</logger>
-		<logger name="com.hazelcast" level="DEBUG">
-
+		<logger name="com.hazelcast" level="DEBUG" additivity="false">
+			>
 			<appender-ref ref="ConsoleAppender" />
 			<!-- <appender-ref ref="RollingFile" /> -->
 		</logger>
