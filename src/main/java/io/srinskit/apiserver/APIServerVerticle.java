@@ -13,11 +13,17 @@ import io.vertx.micrometer.backends.BackendRegistries;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
+// import io.prometheus.client.
+
 public class APIServerVerticle extends AbstractVerticle {
 	static String historyFileName = "/data/api-server-history.txt";
-
+	private static final Logger LOGGER = LogManager.getLogger(APIServerVerticle.class);
 	@Override
 	public void start() {
+		// LOGGER.fatal("API server verticle deployed");
 		System.out.println("Starting an API server");
 		Router router = Router.router(vertx);
 		MeterRegistry registry = BackendRegistries.getDefaultNow();
@@ -53,7 +59,7 @@ public class APIServerVerticle extends AbstractVerticle {
 				} else {
 					reply = String.format("%d + %d = %s\n", x, y, "ERROR, " + res.cause());
 			
-
+					LOGGER.error("Error at adder service:"+ res.cause());
 				}
 				try {
 					FileWriter fileWriter = new FileWriter(historyFileName, true);
@@ -62,6 +68,7 @@ public class APIServerVerticle extends AbstractVerticle {
 				} catch (IOException ex) {
 					System.out.println("Error writing to history file");
 					reply = "ERROR: " + ex.getMessage();
+					LOGGER.error("Error writing to history file at adder service"+ex.toString());
 					
 				}
 				
@@ -86,7 +93,7 @@ public class APIServerVerticle extends AbstractVerticle {
 				} else {
 					reply = String.format("%d / %d = %s\n", x, y, "ERROR, " + res_div.cause());
 			
-
+					LOGGER.error("Error at divide service:"+ res_div.cause());
 				}
 				try {
 					FileWriter fileWriter = new FileWriter(historyFileName, true);
@@ -95,7 +102,7 @@ public class APIServerVerticle extends AbstractVerticle {
 				} catch (IOException ex) {
 					System.out.println("Error writing to history file");
 					reply = "ERROR: " + ex.getMessage();
-					
+					LOGGER.error("Error writing to history file at divide service"+ex.toString());
 				}
 				
 				response.end(reply);
@@ -119,6 +126,7 @@ public class APIServerVerticle extends AbstractVerticle {
 			} catch (IOException ex) {
 				System.out.println("Error writing to history file");
 				reply = "ERROR: " + ex.getMessage();
+				LOGGER.error("Error writing to history file at /history"+ex.toString());
 			}
 			response.end(reply);
 		});

@@ -35,7 +35,12 @@ import io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics;
 import io.micrometer.core.instrument.binder.system.ProcessorMetrics;
 import io.vertx.micrometer.backends.BackendRegistries;
 
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public class CLIDeployer {
+	private static final Logger LOGGER = LogManager.getLogger(CLIDeployer.class);
 	private static AbstractVerticle getVerticle(String name) {
 		switch (name) {
 			case "api-server":
@@ -59,8 +64,9 @@ public class CLIDeployer {
 				System.out.println("Deployed " + module_name);
 				recursiveDeploy(vertx, modules, i + 1);
 			} else {
-				System.out.println("Failed to deploy " + module_name);
-				System.out.println(ar.cause());
+				// System.out.println("Failed to deploy " + module_name);
+				LOGGER.error("Failed to deploy " + module_name + "cause:",ar.cause());
+				// System.out.println(ar.cause());
 			}
 		});
 	}
@@ -70,7 +76,7 @@ public class CLIDeployer {
 		config.getNetworkConfig().getJoin().getMulticastConfig().setEnabled(false);
 		config.getNetworkConfig().setPublicAddress(host);
 		config.setProperty("hazelcast.discovery.enabled", "true");
-
+		config.setProperty("hazelcast.logging.type","log4j2");
 		DiscoveryStrategyConfig discoveryStrategyConfig = new DiscoveryStrategyConfig(
 				new ZookeeperDiscoveryStrategyFactory());
 		discoveryStrategyConfig.addProperty(ZookeeperDiscoveryProperties.ZOOKEEPER_URL.key(),
@@ -108,7 +114,9 @@ public class CLIDeployer {
 				setJVMmetrics();
 				recursiveDeploy(vertx, modules, 0);
 			} else {
-				System.out.println("Could not join cluster");
+				// System.out.println("Could not join cluster");
+				LOGGER.error("Could not join cluster");
+				
 			}
 		});
 
