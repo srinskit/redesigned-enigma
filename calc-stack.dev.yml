@@ -1,0 +1,7 @@
+version: "3.4"
+services:
+  api-server:
+    ports:
+      - target: 8080
+        published: 8080
+        mode: host

@@ -26,7 +26,7 @@ public class APIServerVerticle extends AbstractVerticle {
 	@Override
 	public void start() {
 		// LOGGER.fatal("API server verticle deployed");
-		System.out.println("Starting an API server");
+		LOGGER.info("Starting an API server");
 		Router router = Router.router(vertx);
 		
 		Pattern addpattern = Pattern.compile("/add/.*/.*");
@@ -57,6 +57,7 @@ public class APIServerVerticle extends AbstractVerticle {
 				String reply = "";
 				if (res.succeeded()) {
 					reply = String.format("%d+ %d = %d\n", x, y, res.result());
+					LOGGER.info("Successfully added");
 			
 				} else {
 					reply = String.format("%d + %d = %s\n", x, y, "ERROR, " + res.cause());
@@ -68,7 +69,6 @@ public class APIServerVerticle extends AbstractVerticle {
 					fileWriter.write(reply);
 					fileWriter.close();
 				} catch (IOException ex) {
-					System.out.println("Error writing to history file");
 					reply = "ERROR: " + ex.getMessage();
 					LOGGER.error("Error writing to history file at adder service"+ex.toString());
 					
@@ -91,6 +91,7 @@ public class APIServerVerticle extends AbstractVerticle {
 				String reply = "";
 				if (res_div.succeeded()) {
 					reply = String.format("%d / %d = %f\n", x, y, res_div.result());
+					LOGGER.info("Successfully divided");
 			
 				} else {
 					reply = String.format("%d / %d = %s\n", x, y, "ERROR, " + res_div.cause());
@@ -102,7 +103,6 @@ public class APIServerVerticle extends AbstractVerticle {
 					fileWriter.write(reply);
 					fileWriter.close();
 				} catch (IOException ex) {
-					System.out.println("Error writing to history file");
 					reply = "ERROR: " + ex.getMessage();
 					LOGGER.error("Error writing to history file at divide service"+ex.toString());
 				}
@@ -126,7 +126,6 @@ public class APIServerVerticle extends AbstractVerticle {
 				FileWriter fileWriter = new FileWriter(historyFileName);
 				fileWriter.close();
 			} catch (IOException ex) {
-				System.out.println("Error writing to history file");
 				reply = "ERROR: " + ex.getMessage();
 				LOGGER.error("Error writing to history file at /history"+ex.toString());
 			}

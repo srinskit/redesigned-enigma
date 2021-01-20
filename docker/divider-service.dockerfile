@@ -11,9 +11,9 @@ FROM dependencies as builder
 WORKDIR /usr/share/app
 COPY pom.xml .
 COPY src src
-RUN mvn clean package
+RUN mvn clean package -Dmaven.test.skip=true
 
-FROM openjdk:11.0.7-jre-slim
+FROM openjdk:14-slim-buster
 
 ARG VERSION
 ENV JAR="calc-${VERSION}-fat.jar"

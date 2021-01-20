@@ -1,0 +1,15 @@
+version: "3.4"
+
+networks:
+  overlay-net:
+    external: true
+    driver: overlay
+
+services:
+
+  zookeeper:
+    image: zookeeper
+    deploy:
+      replicas: 1
+    networks:
+      - overlay-net

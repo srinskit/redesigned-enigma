@@ -23,6 +23,9 @@ import io.srinskit.apiserver.APIServerVerticle;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.CountDownLatch; 
+import java.util.concurrent.TimeUnit;
 
 import io.vertx.core.metrics.MetricsOptions;
 import io.vertx.micrometer.VertxPrometheusOptions;
@@ -36,13 +39,13 @@ import io.micrometer.core.instrument.binder.jvm.JvmMemoryMetrics;
 import io.micrometer.core.instrument.binder.jvm.JvmThreadMetrics;
 import io.micrometer.core.instrument.binder.system.ProcessorMetrics;
 
-
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class CLIDeployer {
 	private static final Logger LOGGER = LogManager.getLogger(CLIDeployer.class);
+	private static ClusterManager mgr;
+	private static Vertx vertx;
 	private static AbstractVerticle getVerticle(String name) {
 		switch (name) {
 			case "api-server":
@@ -57,13 +60,13 @@ public class CLIDeployer {
 
 	public static void recursiveDeploy(Vertx vertx, List<String> modules, int i) {
 		if (i >= modules.size()) {
-			System.out.println("Deployed all");
+			LOGGER.info("Deployed all");
 			return;
 		}
 		String module_name = modules.get(i);
 		vertx.deployVerticle(getVerticle(module_name), ar -> {
 			if (ar.succeeded()) {
-				System.out.println("Deployed " + module_name);
+				LOGGER.info("Deployed " + module_name);
 				recursiveDeploy(vertx, modules, i + 1);
 			} else {
 				// System.out.println("Failed to deploy " + module_name);
@@ -106,15 +109,16 @@ public class CLIDeployer {
 		
 	}
 	public static void deploy(List<String> modules, List<String> zookeepers, String host) {
-		ClusterManager mgr = getClusterManager(host, zookeepers, "srinskit-calc");
+		mgr = getClusterManager(host, zookeepers, "srinskit-calc");
 		EventBusOptions ebOptions = new EventBusOptions().setClustered(true).setHost(host);
 		VertxOptions options = new VertxOptions().setClusterManager(mgr).setEventBusOptions(ebOptions).setMetricsOptions(getMetricsOptions());
 
 		Vertx.clusteredVertx(options, res -> {
 			if (res.succeeded()) {
-				Vertx vertx = res.result();
+				vertx = res.result();
 				setJVMmetrics();
 				recursiveDeploy(vertx, modules, 0);
+				
 			} else {
 				// System.out.println("Could not join cluster");
 				LOGGER.error("Could not join cluster");
@@ -122,6 +126,75 @@ public class CLIDeployer {
 			}
 		});
 
+	}
+
+	public static void gracefulShutdown() {
+		Set <String> deployIDSet=vertx.deploymentIDs();
+		System.out.println("number of verticles being undeployed are:"+ deployIDSet.size());
+		CountDownLatch latch_verticles = new CountDownLatch(deployIDSet.size()); 
+		CountDownLatch latch_cluster = new CountDownLatch(1); 
+		CountDownLatch latch_vertx = new CountDownLatch(1);
+		for (String deploymentID : deployIDSet) {
+			vertx.undeploy(deploymentID, res -> {
+			if (res.succeeded()) {
+				LOGGER.info(deploymentID+" verticle  successfully Undeployed");
+				latch_verticles.countDown();
+			} else {
+				LOGGER.error(deploymentID+ "Undeploy failed!");
+			}
+
+		});
+			
+		
+		}
+		try { 
+			latch_verticles.await(5, TimeUnit.SECONDS);
+			mgr.leave(prom->{
+				if(prom.succeeded()){							
+					System.out.println("Hazelcast succesfully left:"+prom.result());
+					latch_cluster.countDown();
+									
+				}
+				else
+				{
+					
+				System.out.println("Error while hazelcast leaving:"+ prom.cause());
+				}
+			});
+		}
+		catch(Exception e) {
+				e.printStackTrace();
+		}
+
+		try {
+			latch_cluster.await(5, TimeUnit.SECONDS);
+			System.out.println("Closing vertx");		
+			vertx.close(prom1->{
+				if(prom1.succeeded()){
+					System.out.println("vertx closed succesfully:"+prom1.result());
+					latch_vertx.countDown();		
+				}
+				else
+				{
+					System.out.println("Error vertx didn't close properly, reason:"+ prom1.cause());
+					
+				}
+			});
+			
+
+		} 
+		catch(Exception e) {
+			e.printStackTrace();
+		}
+
+		try {
+			latch_vertx.await(5, TimeUnit.SECONDS);
+		}
+		
+		catch(Exception e) {
+			e.printStackTrace();
+		}
+		
 	}
 
 	public static void main(String[] args) {
@@ -142,7 +215,8 @@ public class CLIDeployer {
 			List<String> modules = new ArrayList<String>(commandLine.getOptionValues("modules"));
 			List<String> zookeepers = new ArrayList<String>(commandLine.getOptionValues("zookeepers"));
 			String host = commandLine.getOptionValue("host");
-			deploy(modules, zookeepers, host);
+			deploy(modules, zookeepers, host);	
+			Runtime.getRuntime().addShutdownHook(new Thread(() -> gracefulShutdown()));		
 		} else {
 			System.out.println(usageString);
 		}

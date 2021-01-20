@@ -21,5 +21,6 @@ public class AdderServiceVerticle extends AbstractVerticle {
 	@Override
 	public void stop() {
 		binder.unregister(consumer);
+		System.out.println("adder verticle stopped");
 	}
 }

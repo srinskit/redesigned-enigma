@@ -1,0 +1,59 @@
+version: "3.4"
+
+networks:
+  overlay-net:
+    external: true
+    driver: overlay
+
+services:
+  api-server:
+    image: local/calc-api-server:latest
+    networks:
+      - overlay-net
+    volumes:
+      - type: volume
+        source: data-volume
+        target: /data/
+    environment:
+      - LOG_LEVEL=INFO
+      - CALC_URL=https://localhost/
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        window: 10s
+
+  
+  adder:
+    image: local/calc-adder-service:latest
+    networks:
+      - overlay-net
+    environment:
+      - LOG_LEVEL=DEBUG
+      - CALC_URL=https://localhost/
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        window: 10s
+
+
+  divider:
+    image: local/calc-divider-service:latest
+    networks:
+      - overlay-net
+    environment:
+      - LOG_LEVEL=INFO
+      - CALC_URL=https://localhost/
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        window: 10s
+
+   
+volumes:
+  data-volume:
